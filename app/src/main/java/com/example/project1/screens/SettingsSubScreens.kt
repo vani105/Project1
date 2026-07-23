@@ -16,26 +16,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.project1.data.AppViewModel
 import com.example.project1.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DefaultCurrencyScreen(onBack: () -> Unit) {
-    var selectedCurrency by remember { mutableStateOf("Indian Rupee") }
+fun DefaultCurrencyScreen(onBack: () -> Unit, viewModel: AppViewModel) {
     val currencies = listOf("Indian Rupee", "US Dollar", "Euro", "British Pound")
 
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Default Currency", fontWeight = FontWeight.ExtraBold) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
+                title = { Text("Default Currency", fontWeight = FontWeight.ExtraBold, color = BrandDark) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BrandDark) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp)) {
-            Text("Choose your preferred currency for portfolio valuation and performance tracking.", color = TextGray)
+            Text("Choose your preferred currency for portfolio valuation and performance tracking.", color = Color.Black, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(32.dp))
             
             currencies.forEach { currency ->
@@ -47,8 +47,8 @@ fun DefaultCurrencyScreen(onBack: () -> Unit) {
                         "Euro" -> "EUR • European Union"
                         else -> "GBP • United Kingdom"
                     },
-                    isSelected = selectedCurrency == currency,
-                    onClick = { selectedCurrency = currency }
+                    isSelected = viewModel.selectedCurrency == currency,
+                    onClick = { viewModel.selectedCurrency = currency }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -58,13 +58,21 @@ fun DefaultCurrencyScreen(onBack: () -> Unit) {
                 Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.Top) {
                     Icon(Icons.Default.Info, null, tint = BrandPrimary)
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text("Changing your default currency will automatically update all portfolio valuations using current market exchange rates.", fontSize = 12.sp)
+                    Text("Changing your default currency will automatically update all portfolio valuations using current market exchange rates.", fontSize = 12.sp, color = BrandDark, fontWeight = FontWeight.Bold)
                 }
             }
             
             Spacer(modifier = Modifier.weight(1f))
-            Button(onClick = onBack, modifier = Modifier.fillMaxWidth().height(64.dp), shape = RoundedCornerShape(20.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandDark)) {
-                Text("Save Preferences", fontWeight = FontWeight.Bold)
+            Button(
+                onClick = { 
+                    viewModel.syncPreferences()
+                    onBack() 
+                }, 
+                modifier = Modifier.fillMaxWidth().height(64.dp), 
+                shape = RoundedCornerShape(20.dp), 
+                colors = ButtonDefaults.buttonColors(containerColor = BrandDark)
+            ) {
+                Text("Save Preferences", fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
     }
@@ -91,7 +99,7 @@ fun VibrantRadioItem(title: String, subtitle: String, isSelected: Boolean, onCli
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, fontWeight = FontWeight.ExtraBold, color = BrandDark)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(color = TextGray))
+                Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(color = Color.Black, fontWeight = FontWeight.Bold))
             }
             if (isSelected) {
                 Icon(Icons.Default.CheckCircle, null, tint = BrandGreen)
@@ -102,28 +110,25 @@ fun VibrantRadioItem(title: String, subtitle: String, isSelected: Boolean, onCli
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AlertPreferencesScreen(onBack: () -> Unit) {
-    var priceAlerts by remember { mutableStateOf(true) }
-    var volAlerts by remember { mutableStateOf(false) }
-
+fun AlertPreferencesScreen(onBack: () -> Unit, viewModel: AppViewModel) {
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Alert Preferences", fontWeight = FontWeight.ExtraBold) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
+                title = { Text("Alert Preferences", fontWeight = FontWeight.ExtraBold, color = BrandDark) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BrandDark) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             item {
-                Text("Configure critical financial triggers for your portfolio.", color = TextGray)
+                Text("Configure critical financial triggers for your portfolio.", color = Color.Black, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                VibrantToggleCard("Price Alerts", "Get notified when assets reach target prices.", Icons.Default.Payments, priceAlerts) { priceAlerts = it }
+                VibrantToggleCard("Price Alerts", "Get notified when assets reach target prices.", Icons.Default.Payments, viewModel.priceAlertsEnabled) { viewModel.priceAlertsEnabled = it }
                 Spacer(modifier = Modifier.height(16.dp))
-                VibrantToggleCard("Volatility Alerts", "Alerts for single-day movements > 3.5%.", Icons.Default.TrendingUp, volAlerts) { volAlerts = it }
+                VibrantToggleCard("Volatility Alerts", "Alerts for single-day movements > 3.5%.", Icons.Default.TrendingUp, viewModel.volAlertsEnabled) { viewModel.volAlertsEnabled = it }
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 Text("DELIVERY CHANNELS", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = BrandPrimary))
@@ -134,8 +139,16 @@ fun AlertPreferencesScreen(onBack: () -> Unit) {
                 ChannelItem("SMS Alerts", "CRITICAL ONLY", BrandSecondary)
                 
                 Spacer(modifier = Modifier.height(32.dp))
-                Button(onClick = onBack, modifier = Modifier.fillMaxWidth().height(64.dp), shape = RoundedCornerShape(20.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandDark)) {
-                    Text("Save Preferences", fontWeight = FontWeight.Bold)
+                Button(
+                    onClick = { 
+                        viewModel.syncPreferences()
+                        onBack() 
+                    }, 
+                    modifier = Modifier.fillMaxWidth().height(64.dp), 
+                    shape = RoundedCornerShape(20.dp), 
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandDark)
+                ) {
+                    Text("Save Preferences", fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
         }
@@ -152,7 +165,7 @@ fun VibrantToggleCard(title: String, subtitle: String, icon: androidx.compose.ui
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, fontWeight = FontWeight.ExtraBold, color = BrandDark)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(color = TextGray))
+                Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(color = Color.Black, fontWeight = FontWeight.Bold))
             }
             Switch(checked = isEnabled, onCheckedChange = onToggle, colors = SwitchDefaults.colors(checkedTrackColor = BrandPrimary))
         }
@@ -171,35 +184,40 @@ fun ChannelItem(label: String, status: String, color: Color) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegionLanguageScreen(onBack: () -> Unit) {
-    var selectedRegion by remember { mutableStateOf("India") }
-    var selectedLanguage by remember { mutableStateOf("English (India)") }
-
+fun RegionLanguageScreen(onBack: () -> Unit, viewModel: AppViewModel) {
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Region & Language", fontWeight = FontWeight.ExtraBold) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
+                title = { Text("Region & Language", fontWeight = FontWeight.ExtraBold, color = BrandDark) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BrandDark) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp)) {
-            Text("Adjust currency symbols and market hours according to your location.", color = TextGray)
+            Text("Adjust currency symbols and market hours according to your location.", color = Color.Black, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(32.dp))
             
-            VibrantLabelField("REGION", "Select Region", selectedRegion, { selectedRegion = it })
+            VibrantLabelField("REGION", "Select Region", viewModel.selectedRegion, { viewModel.selectedRegion = it })
             Spacer(modifier = Modifier.height(24.dp))
-            VibrantLabelField("DISPLAY LANGUAGE", "Select Language", selectedLanguage, { selectedLanguage = it })
+            VibrantLabelField("DISPLAY LANGUAGE", "Select Language", viewModel.selectedLanguage, { viewModel.selectedLanguage = it })
             
             Spacer(modifier = Modifier.height(40.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 OutlinedButton(onClick = onBack, modifier = Modifier.weight(1f).height(56.dp), shape = RoundedCornerShape(16.dp)) {
                     Text("Discard", color = BrandDark)
                 }
-                Button(onClick = onBack, modifier = Modifier.weight(1f).height(56.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandDark)) {
-                    Text("Apply")
+                Button(
+                    onClick = { 
+                        viewModel.syncPreferences()
+                        onBack() 
+                    }, 
+                    modifier = Modifier.weight(1f).height(56.dp), 
+                    shape = RoundedCornerShape(16.dp), 
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandDark)
+                ) {
+                    Text("Apply", color = Color.White)
                 }
             }
         }
@@ -213,15 +231,15 @@ fun ExportPortfolioScreen(onBack: () -> Unit) {
         containerColor = BrandBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Export Data", fontWeight = FontWeight.ExtraBold) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
+                title = { Text("Export Data", fontWeight = FontWeight.ExtraBold, color = BrandDark) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BrandDark) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             item {
-                Text("Download your investment history and performance metrics.", color = TextGray)
+                Text("Download your investment history and performance metrics.", color = Color.Black, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 ExportCard("CSV Spreadsheet", "Best for raw data manipulation in Excel or Google Sheets.", Icons.Default.TableChart)
@@ -233,8 +251,8 @@ fun ExportPortfolioScreen(onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(32.dp))
                 Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
                     Column(modifier = Modifier.padding(20.dp)) {
-                        Text("DATA PRIVACY", fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                        Text("Exports contain sensitive financial info. We recommend encrypting these files if stored on public services.", style = MaterialTheme.typography.bodySmall, color = TextGray)
+                        Text("DATA PRIVACY", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = BrandDark)
+                        Text("Exports contain sensitive financial info. We recommend encrypting these files if stored on public services.", style = MaterialTheme.typography.bodySmall, color = Color.Black, fontWeight = FontWeight.Bold)
                     }
                 }
                 Spacer(modifier = Modifier.height(32.dp))
@@ -254,7 +272,7 @@ fun ExportCard(title: String, subtitle: String, icon: androidx.compose.ui.graphi
                 Spacer(modifier = Modifier.width(16.dp))
                 Column {
                     Text(title, fontWeight = FontWeight.ExtraBold, color = BrandDark)
-                    Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(color = TextGray))
+                    Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(color = Color.Black, fontWeight = FontWeight.Bold))
                 }
             }
             Spacer(modifier = Modifier.height(20.dp))
@@ -264,7 +282,7 @@ fun ExportCard(title: String, subtitle: String, icon: androidx.compose.ui.graphi
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = if (isPrimary) BrandGreen else BrandDark)
             ) {
-                Text("GENERATE ${title.split(" ")[0].uppercase()}")
+                Text("GENERATE ${title.split(" ")[0].uppercase()}", color = Color.White)
             }
         }
     }
@@ -272,22 +290,20 @@ fun ExportCard(title: String, subtitle: String, icon: androidx.compose.ui.graphi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InflationBenchmarksScreen(onBack: () -> Unit) {
-    var benchmarkMode by remember { mutableStateOf("Auto (RBI CPI)") }
-
+fun InflationBenchmarksScreen(onBack: () -> Unit, viewModel: AppViewModel) {
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Inflation Benchmarks", fontWeight = FontWeight.ExtraBold) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
+                title = { Text("Inflation Benchmarks", fontWeight = FontWeight.ExtraBold, color = BrandDark) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BrandDark) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             item {
-                Text("Configure how the system calculates your real rate of return against purchasing power.", color = TextGray)
+                Text("Configure how the system calculates your real rate of return against purchasing power.", color = Color.Black, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(32.dp))
                 
                 Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(24.dp)) {
@@ -295,13 +311,13 @@ fun InflationBenchmarksScreen(onBack: () -> Unit) {
                         Text("Benchmark Mode", fontWeight = FontWeight.Bold, color = BrandDark)
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(modifier = Modifier.fillMaxWidth().background(BrandBackground, RoundedCornerShape(12.dp)).padding(4.dp)) {
-                            ModeButton("Auto (RBI CPI)", benchmarkMode == "Auto (RBI CPI)", Modifier.weight(1f)) { benchmarkMode = "Auto (RBI CPI)" }
-                            ModeButton("Manual", benchmarkMode == "Manual", Modifier.weight(1f)) { benchmarkMode = "Manual" }
+                            ModeButton("Auto (RBI CPI)", viewModel.benchmarkMode == "Auto (RBI CPI)", Modifier.weight(1f)) { viewModel.benchmarkMode = "Auto (RBI CPI)" }
+                            ModeButton("Manual", viewModel.benchmarkMode == "Manual", Modifier.weight(1f)) { viewModel.benchmarkMode = "Manual" }
                         }
                         
-                        if (benchmarkMode == "Manual") {
+                        if (viewModel.benchmarkMode == "Manual") {
                             Spacer(modifier = Modifier.height(24.dp))
-                            VibrantTextField(value = "6.5", onValueChange = {}, label = "ANNUAL INFLATION RATE (%)", placeholder = "0.00")
+                            VibrantTextField(value = viewModel.manualInflationRate, onValueChange = { viewModel.manualInflationRate = it }, label = "ANNUAL INFLATION RATE (%)", placeholder = "0.00")
                         } else {
                             Spacer(modifier = Modifier.height(24.dp))
                             Card(colors = CardDefaults.cardColors(containerColor = SuccessGreenBg), shape = RoundedCornerShape(12.dp)) {
@@ -309,7 +325,7 @@ fun InflationBenchmarksScreen(onBack: () -> Unit) {
                                     Icon(Icons.Default.TrendingUp, null, tint = BrandGreen)
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column {
-                                        Text("Current RBI CPI Rate", style = MaterialTheme.typography.labelSmall)
+                                        Text("Current RBI CPI Rate", style = MaterialTheme.typography.labelSmall, color = Color.Black)
                                         Text("5.09% (Feb 2024)", fontWeight = FontWeight.ExtraBold, color = BrandGreen)
                                     }
                                 }
@@ -317,8 +333,16 @@ fun InflationBenchmarksScreen(onBack: () -> Unit) {
                         }
                         
                         Spacer(modifier = Modifier.height(24.dp))
-                        Button(onClick = onBack, modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandDark)) {
-                            Text("Save Preferences")
+                        Button(
+                            onClick = { 
+                                viewModel.syncPreferences()
+                                onBack() 
+                            }, 
+                            modifier = Modifier.fillMaxWidth().height(56.dp), 
+                            shape = RoundedCornerShape(12.dp), 
+                            colors = ButtonDefaults.buttonColors(containerColor = BrandDark)
+                        ) {
+                            Text("Save Preferences", color = Color.White)
                         }
                     }
                 }
@@ -345,7 +369,7 @@ fun ModeButton(label: String, isSelected: Boolean, modifier: Modifier, onClick: 
         shape = RoundedCornerShape(10.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = if (isSelected) BrandDark else Color.Transparent,
-            contentColor = if (isSelected) Color.White else TextGray
+            contentColor = if (isSelected) Color.White else Color.Black
         ),
         elevation = null
     ) {
@@ -364,14 +388,14 @@ fun EmailSummariesScreen(onBack: () -> Unit) {
         containerColor = BrandBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Email Summaries", fontWeight = FontWeight.ExtraBold) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
+                title = { Text("Email Summaries", fontWeight = FontWeight.ExtraBold, color = BrandDark) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BrandDark) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp)) {
-            Text("Configure how and when you receive financial insights directly to your inbox.", color = TextGray)
+            Text("Configure how and when you receive financial insights directly to your inbox.", color = Color.Black, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(32.dp))
             
             VibrantToggleCard("Weekly Digest", "Portfolio activity every Sunday at 8:00 AM.", Icons.Default.MenuBook, weeklyDigest) { weeklyDigest = it }
@@ -382,7 +406,7 @@ fun EmailSummariesScreen(onBack: () -> Unit) {
             
             Spacer(modifier = Modifier.weight(1f))
             Button(onClick = onBack, modifier = Modifier.fillMaxWidth().height(64.dp), shape = RoundedCornerShape(20.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandDark)) {
-                Text("Save Preferences", fontWeight = FontWeight.Bold)
+                Text("Save Preferences", fontWeight = FontWeight.Bold, color = Color.White)
             }
         }
     }

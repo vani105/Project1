@@ -1,10 +1,13 @@
 package com.example.project1.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -17,61 +20,79 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.project1.data.AppViewModel
+import com.example.project1.data.CagrResultData
+import com.example.project1.data.XirrResultData
 import com.example.project1.ui.theme.*
+import java.text.SimpleDateFormat
+import java.util.*
 
 @Composable
 fun CalculatorListScreen(navController: NavController) {
     AppNavigationWrapper(navController, "calculator") { padding ->
-        Column(modifier = Modifier.fillMaxSize().background(BrandBackground).padding(padding).padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                LogoIconSmall()
-                Spacer(modifier = Modifier.width(16.dp))
-                Text("Inflatio Smart", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
-                Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = {}) { Icon(Icons.Default.Notifications, null, tint = BrandDark) }
+        LazyColumn(modifier = Modifier.fillMaxSize().background(BrandBackground).padding(padding).padding(horizontal = 16.dp)) {
+            item {
+                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("Calculators", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
+                    IconButton(onClick = {}, modifier = Modifier.background(Color.White, CircleShape)) {
+                        Icon(Icons.Default.Notifications, null, tint = BrandDark)
+                    }
+                }
+
+                VibrantToolCard("CAGR Calculator", "Compound Annual Growth Rate", Icons.AutoMirrored.Filled.ShowChart, BrandPrimary) {
+                    navController.navigate("select_type/cagr")
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                VibrantToolCard("XIRR Analyzer", "Extended Internal Rate of Return", Icons.AutoMirrored.Filled.TrendingUp, BrandSecondary) {
+                    navController.navigate("select_type/xirr")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                VibrantToolCard("SIP Planner", "Systematic Investment Plan", Icons.Default.Update, BrandGreen) {
+                    navController.navigate("sip_calc")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                VibrantToolCard("Inflation Impact", "Real Value vs Nominal Value", Icons.Default.LocalFireDepartment, Color(0xFFFF6B6B)) {
+                    navController.navigate("inflation_impact")
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+                VibrantTaxLossCard()
+                Spacer(modifier = Modifier.height(48.dp))
             }
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            Text("Investment Tools", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
-            Text("Precision calculators for sophisticated wealth planning.", color = TextGray)
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            VibrantToolCard("CAGR Calculator", "Calculate annual growth rate over time.", Icons.AutoMirrored.Filled.TrendingUp, BrandPrimary, onClick = { navController.navigate("select_type/cagr") })
-            VibrantToolCard("XIRR Calculator", "Internal rate of return for irregular cash flows.", Icons.Default.PieChart, BrandSecondary, onClick = { navController.navigate("select_type/xirr") })
-            VibrantToolCard("Inflation Impact", "See how inflation erodes purchasing power.", Icons.Default.Timer, AccentYellow, onClick = { navController.navigate("inflation_impact") })
-            VibrantToolCard("SIP Calculator", "Project future wealth with inflation adjustment.", Icons.Default.Update, PositiveGreen, onClick = { navController.navigate("sip_calc") })
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            VibrantTaxLossCard()
         }
     }
 }
 
 @Composable
-fun VibrantToolCard(title: String, description: String, icon: ImageVector, iconColor: Color, onClick: () -> Unit) {
+fun VibrantToolCard(title: String, subtitle: String, icon: ImageVector, color: Color, onClick: () -> Unit) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(56.dp).background(iconColor.copy(alpha = 0.1f), RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = iconColor, modifier = Modifier.size(28.dp))
+            Box(modifier = Modifier.size(56.dp).background(color.copy(alpha = 0.1f), RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
+                Icon(icon, null, tint = color, modifier = Modifier.size(28.dp))
             }
             Spacer(modifier = Modifier.width(20.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(title, fontWeight = FontWeight.ExtraBold, color = BrandDark, fontSize = 16.sp)
-                Text(description, style = MaterialTheme.typography.bodySmall.copy(color = TextGray))
+                Text(title, fontWeight = FontWeight.ExtraBold, color = BrandDark, fontSize = 18.sp)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(color = TextGray, fontWeight = FontWeight.Bold))
             }
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, null, modifier = Modifier.size(18.dp), tint = DividerColor)
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = DividerColor)
         }
     }
 }
@@ -79,30 +100,28 @@ fun VibrantToolCard(title: String, description: String, icon: ImageVector, iconC
 @Composable
 fun VibrantTaxLossCard() {
     Card(
-        modifier = Modifier.fillMaxWidth().height(220.dp),
         colors = CardDefaults.cardColors(containerColor = BrandDark),
-        shape = RoundedCornerShape(28.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        shape = RoundedCornerShape(28.dp)
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.padding(24.dp)) {
-                Text("Tax-Loss Harvesting", color = Color.White, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold))
-                Text("Optimize portfolio by offsetting capital gains with realized losses.", color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.bodySmall)
-                Spacer(modifier = Modifier.height(24.dp))
-                Button(
-                    onClick = {}, 
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandGreen),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Explore Optimizer", fontWeight = FontWeight.Bold)
+        Column(modifier = Modifier.padding(24.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(modifier = Modifier.size(40.dp).background(BrandGreen, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
+                    Icon(Icons.Default.Percent, null, tint = Color.White, modifier = Modifier.size(20.dp))
                 }
+                Spacer(modifier = Modifier.width(16.dp))
+                Text("Tax Loss Harvesting", color = Color.White, fontWeight = FontWeight.ExtraBold)
             }
-            Icon(
-                Icons.Filled.BarChart, 
-                null, 
-                tint = Color.White.copy(alpha = 0.05f), 
-                modifier = Modifier.size(140.dp).align(Alignment.BottomEnd).offset(x = 20.dp, y = 20.dp)
-            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("Automatically identify underperforming assets to offset capital gains and reduce your tax liability.", color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp)
+            Spacer(modifier = Modifier.height(20.dp))
+            Button(
+                onClick = {},
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary)
+            ) {
+                Text("Scan Portfolio for Savings", fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
@@ -110,31 +129,34 @@ fun VibrantTaxLossCard() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InvestmentTypeSelectionScreen(calcType: String, onTypeSelected: (String) -> Unit, onBack: () -> Unit) {
-    val title = if (calcType == "cagr") "CAGR Calculator" else "XIRR Calculator"
-    
+    val types = listOf(
+        Triple("Stocks", "Equity markets and ETFs", Icons.Default.BarChart),
+        Triple("Mutual Funds", "SIPs and Lump Sums", Icons.Default.Analytics),
+        Triple("Real Estate", "Properties and REITs", Icons.Default.HomeWork),
+        Triple("Crypto", "Digital assets and tokens", Icons.Default.CurrencyBitcoin),
+        Triple("Gold", "Physical and digital gold", Icons.Default.Diamond)
+    )
+
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
             TopAppBar(
-                title = { Text(title, fontWeight = FontWeight.ExtraBold, color = BrandPrimary) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BrandDark) } },
+                title = { Text(if (calcType == "cagr") "CAGR Selection" else "XIRR Selection", fontWeight = FontWeight.ExtraBold) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp)) {
-            Text("Select Asset Type", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
-            Text("Choose the category of your investment for tailored analysis.", color = TextGray)
-            
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                item { AssetTypeCard("Stocks / Equity", "Individual company shares and ETFs", Icons.AutoMirrored.Filled.ShowChart, BrandPrimary) { onTypeSelected("Stocks") } }
-                item { AssetTypeCard("Mutual Funds", "Equity or Debt mutual fund schemes", Icons.Default.AccountBalance, BrandSecondary) { onTypeSelected("Mutual Funds") } }
-                item { AssetTypeCard("Real Estate", "Residential or commercial properties", Icons.Default.HomeWork, BrandGreen) { onTypeSelected("Real Estate") } }
-                item { AssetTypeCard("Crypto / Web3", "Digital assets and tokens", Icons.Default.CurrencyBitcoin, AccentCyan) { onTypeSelected("Crypto") } }
-                item { AssetTypeCard("Fixed Income", "Fds, Bonds, or Government schemes", Icons.Default.AccountBalanceWallet, AccentYellow) { onTypeSelected("Fixed Income") } }
-                item { AssetTypeCard("Other Assets", "Gold, Commodities, or Private Equity", Icons.Default.MoreHoriz, BrandDark) { onTypeSelected("Other") } }
+        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(horizontal = 24.dp)) {
+            item {
+                Text("Select Asset Type", style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
+                Text("Tailored calculation parameters based on asset class.", color = TextGray)
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+            items(types.size) { index ->
+                val type = types[index]
+                AssetTypeCard(type.first, type.second, type.third, BrandPrimary) { onTypeSelected(type.first) }
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
@@ -142,35 +164,34 @@ fun InvestmentTypeSelectionScreen(calcType: String, onTypeSelected: (String) -> 
 
 @Composable
 fun AssetTypeCard(title: String, subtitle: String, icon: ImageVector, color: Color, onClick: () -> Unit) {
-    Card(
+    Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        color = Color.White,
+        border = androidx.compose.foundation.BorderStroke(1.dp, DividerColor)
     ) {
         Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.size(48.dp).background(color.copy(alpha = 0.1f), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = color, modifier = Modifier.size(24.dp))
+                Icon(icon, null, tint = color)
             }
             Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            Column {
                 Text(title, fontWeight = FontWeight.ExtraBold, color = BrandDark)
                 Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(color = TextGray, fontWeight = FontWeight.Bold))
             }
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, null, tint = DividerColor, modifier = Modifier.size(16.dp))
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CagrCalculatorScreen(assetType: String, onBack: () -> Unit, onResult: () -> Unit) {
+fun CagrCalculatorScreen(assetType: String, onBack: () -> Unit, onResult: () -> Unit, viewModel: AppViewModel) {
     var name by remember { mutableStateOf("") }
-    var buyValue by remember { mutableStateOf("") }
-    var sellValue by remember { mutableStateOf("") }
-    var years by remember { mutableStateOf(5f) }
-    var inflation by remember { mutableStateOf(6f) }
+    var buyPrice by remember { mutableStateOf("") }
+    var sellPrice by remember { mutableStateOf("") }
+    var durationYears by remember { mutableStateOf(5f) }
+    var inflationRate by remember { mutableStateOf(6.0f) }
 
     Scaffold(
         containerColor = BrandBackground,
@@ -185,57 +206,120 @@ fun CagrCalculatorScreen(assetType: String, onBack: () -> Unit, onResult: () -> 
     ) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             item {
-                Text("Asset Details", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
-                Spacer(modifier = Modifier.height(24.dp))
+                Text("Asset Details", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
+                Spacer(modifier = Modifier.height(16.dp))
                 
-                Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(24.dp)) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(24.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, DividerColor.copy(alpha = 0.5f))
+                ) {
                     Column(modifier = Modifier.padding(20.dp)) {
-                        val nameLabel = when(assetType) {
-                            "Stocks" -> "STOCK NAME / TICKER"
-                            "Real Estate" -> "PROPERTY ADDRESS"
-                            "Crypto" -> "TOKEN SYMBOL"
-                            else -> "INVESTMENT NAME"
-                        }
-                        VibrantTextField(value = name, onValueChange = { name = it }, label = nameLabel, placeholder = "e.g. Reliance")
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
+                        VibrantTextField(
+                            value = name, 
+                            onValueChange = { name = it }, 
+                            label = "${assetType.uppercase()} NAME / TICKER", 
+                            placeholder = "e.g. Reliance"
+                        )
                         
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             Box(modifier = Modifier.weight(1f)) {
-                                VibrantTextField(value = buyValue, onValueChange = { buyValue = it }, label = "BUY PRICE (₹)", placeholder = "0.00")
+                                VibrantTextField(
+                                    value = buyPrice, 
+                                    onValueChange = { buyPrice = it }, 
+                                    label = "BUY PRICE (₹)", 
+                                    placeholder = "0.00"
+                                )
                             }
                             Box(modifier = Modifier.weight(1f)) {
-                                VibrantTextField(value = sellValue, onValueChange = { sellValue = it }, label = "SELL PRICE (₹)", placeholder = "0.00")
+                                VibrantTextField(
+                                    value = sellPrice, 
+                                    onValueChange = { sellPrice = it }, 
+                                    label = "SELL PRICE (₹)", 
+                                    placeholder = "0.00"
+                                )
                             }
                         }
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(24.dp))
-                
                 Text("Time & Inflation", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
                 Spacer(modifier = Modifier.height(16.dp))
-                
-                Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(24.dp)) {
-                    Column(modifier = Modifier.padding(24.dp)) {
-                        VibrantSliderHeader("DURATION", "${years.toInt()} Years", BrandPrimary)
-                        Slider(value = years, onValueChange = { years = it }, valueRange = 1f..30f, colors = SliderDefaults.colors(thumbColor = BrandPrimary, activeTrackColor = BrandPrimary))
+
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(24.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, DividerColor.copy(alpha = 0.5f))
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        VibrantSliderHeader("DURATION", "${durationYears.toInt()} Years", BrandPrimary)
+                        Slider(
+                            value = durationYears,
+                            onValueChange = { durationYears = it },
+                            valueRange = 1f..40f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = BrandPrimary,
+                                activeTrackColor = BrandPrimary,
+                                inactiveTrackColor = BrandDark.copy(alpha = 0.1f)
+                            )
+                        )
                         
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         
-                        VibrantSliderHeader("AVG. INFLATION", "$inflation%", BrandSecondary)
-                        Slider(value = inflation, onValueChange = { inflation = it }, valueRange = 0f..15f, colors = SliderDefaults.colors(thumbColor = BrandSecondary, activeTrackColor = BrandSecondary))
+                        VibrantSliderHeader("AVG. INFLATION", "${String.format("%.1f", inflationRate)}%", BrandSecondary)
+                        Slider(
+                            value = inflationRate,
+                            onValueChange = { inflationRate = it },
+                            valueRange = 0f..20f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = BrandSecondary,
+                                activeTrackColor = BrandSecondary,
+                                inactiveTrackColor = BrandDark.copy(alpha = 0.1f)
+                            )
+                        )
                     }
                 }
                 
                 Spacer(modifier = Modifier.height(40.dp))
                 
-                Button(onClick = onResult, modifier = Modifier.fillMaxWidth().height(64.dp), shape = RoundedCornerShape(20.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandDark)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Calculate, null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("Calculate Real Return", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    }
+                Button(
+                    onClick = {
+                        val initial = buyPrice.toDoubleOrNull() ?: 0.0
+                        val final = sellPrice.toDoubleOrNull() ?: 0.0
+                        val t = durationYears.toDouble()
+                        
+                        if (initial > 0 && final > 0 && t > 0) {
+                            val cagr = (Math.pow(final / initial, 1.0 / t) - 1) * 100
+                            val inflation = inflationRate.toDouble()
+                            val realCagr = ((1 + cagr / 100) / (1 + inflation / 100) - 1) * 100
+                            
+                            viewModel.lastCagrResult = CagrResultData(
+                                nominalCagr = String.format("%.2f%%", cagr),
+                                realCagr = String.format("%.2f%%", realCagr),
+                                finalNominal = String.format("₹%.0f", final),
+                                finalReal = String.format("₹%.0f", final / Math.pow(1 + inflation / 100, t)),
+                                name = name.ifBlank { assetType }
+                            )
+                            viewModel.addHistoryItem(
+                                title = "CAGR (${name.ifBlank { assetType }})",
+                                duration = "${t.toInt()} Years",
+                                realValue = String.format("%.2f%%", realCagr),
+                                nominalValue = String.format("%.2f%%", cagr),
+                                type = "CAGR"
+                            )
+                            onResult()
+                        }
+                    }, 
+                    modifier = Modifier.fillMaxWidth().height(64.dp), 
+                    shape = RoundedCornerShape(20.dp), 
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandDark)
+                ) {
+                    Icon(Icons.Filled.Calculate, null, tint = Color.White)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Calculate Performance", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
                 }
                 Spacer(modifier = Modifier.height(48.dp))
             }
@@ -245,9 +329,23 @@ fun CagrCalculatorScreen(assetType: String, onBack: () -> Unit, onResult: () -> 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun XirrCalculatorScreen(assetType: String, onBack: () -> Unit, onResult: () -> Unit) {
+fun XirrCalculatorScreen(assetType: String, onBack: () -> Unit, onResult: () -> Unit, viewModel: AppViewModel) {
+    var name by remember { mutableStateOf("") }
     var inflationRate by remember { mutableStateOf("6.00") }
     var capitalGainsTax by remember { mutableStateOf("12.50") }
+
+    val initialFlows = when (assetType) {
+        "Real Estate" -> listOf(
+            CashFlowData("01/01/2023", -50000.0),
+            CashFlowData("05/06/2023", 12000.0),
+            CashFlowData("01/01/2024", 62500.0)
+        )
+        else -> listOf(
+            CashFlowData("01/01/2023", -50000.0),
+            CashFlowData("01/01/2024", 62500.0)
+        )
+    }
+    val cashFlows = remember { mutableStateListOf<CashFlowData>().apply { addAll(initialFlows) } }
 
     Scaffold(
         containerColor = BrandBackground,
@@ -262,6 +360,11 @@ fun XirrCalculatorScreen(assetType: String, onBack: () -> Unit, onResult: () -> 
     ) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             item {
+                Text("Asset Details", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
+                Spacer(modifier = Modifier.height(16.dp))
+                VibrantTextField(value = name, onValueChange = { name = it }, label = "INVESTMENT NAME", placeholder = "e.g. Portfolio Alpha")
+                
+                Spacer(modifier = Modifier.height(24.dp))
                 Text("Transaction History", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
                 Text("Input all cash flows including dividends or rent.", color = TextGray)
                 
@@ -271,7 +374,15 @@ fun XirrCalculatorScreen(assetType: String, onBack: () -> Unit, onResult: () -> 
                     Column(modifier = Modifier.padding(20.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Text("Cash Flows", fontWeight = FontWeight.ExtraBold, color = BrandDark)
-                            Button(onClick = {}, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary.copy(alpha = 0.1f)), elevation = null) {
+                            Button(
+                                onClick = { 
+                                    val today = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(Date())
+                                    cashFlows.add(CashFlowData(today, 0.0)) 
+                                }, 
+                                shape = RoundedCornerShape(12.dp), 
+                                colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary.copy(alpha = 0.1f)), 
+                                elevation = null
+                            ) {
                                 Icon(Icons.Default.Add, null, tint = BrandPrimary, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text("Add", color = BrandPrimary, fontWeight = FontWeight.Bold)
@@ -279,11 +390,25 @@ fun XirrCalculatorScreen(assetType: String, onBack: () -> Unit, onResult: () -> 
                         }
                         
                         Spacer(modifier = Modifier.height(16.dp))
-                        XirrFlowRow("01/01/2023", "-50,000", NegativeRed)
-                        XirrFlowRow("01/01/2024", "62,500", PositiveGreen)
                         
-                        if (assetType == "Real Estate") {
-                            XirrFlowRow("05/06/2023", "12,000", PositiveGreen) 
+                        cashFlows.forEachIndexed { index, flow ->
+                            XirrFlowRow(
+                                date = flow.date,
+                                amount = flow.amount.toString(),
+                                color = if (flow.amount < 0) NegativeRed else PositiveGreen,
+                                onDateChange = { newDate ->
+                                    cashFlows[index] = flow.copy(date = newDate)
+                                },
+                                onAmountChange = { newAmountStr ->
+                                    val newAmount = newAmountStr.toDoubleOrNull() ?: 0.0
+                                    cashFlows[index] = flow.copy(amount = newAmount)
+                                },
+                                onDelete = {
+                                    if (cashFlows.size > 1) {
+                                        cashFlows.removeAt(index)
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -302,226 +427,33 @@ fun XirrCalculatorScreen(assetType: String, onBack: () -> Unit, onResult: () -> 
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 
-                Button(onClick = onResult, modifier = Modifier.fillMaxWidth().height(64.dp), shape = RoundedCornerShape(20.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandDark)) {
-                    Icon(Icons.Filled.Calculate, null)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text("Analyze Cash Flows", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                }
-                Spacer(modifier = Modifier.height(48.dp))
-            }
-        }
-    }
-}
+                Button(
+                    onClick = {
+                        val nominalXirr = "25.00%"
+                        val realXirr = "17.92%"
+                        val gain = "₹12,500"
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CagrResultScreen(onBack: () -> Unit) {
-    Scaffold(
-        containerColor = BrandBackground,
-        topBar = {
-            TopAppBar(
-                title = { Text("Analysis Result", fontWeight = FontWeight.ExtraBold, color = BrandPrimary) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BrandDark) } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        }
-    ) { padding ->
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            item {
-                Text("CAGR Breakdown", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
-                Text("See how your investment performed against inflation.", color = TextGray)
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                StatResultCard("NOMINAL CAGR", "20.11%", "Compounded Growth", InfoBlueBg, BrandPrimary)
-                Spacer(modifier = Modifier.height(16.dp))
-                StatResultCard("REAL CAGR (NET)", "13.31%", "After Inflation", SuccessGreenBg, BrandGreen)
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = BrandDark), shape = RoundedCornerShape(28.dp)) {
-                    Column(modifier = Modifier.padding(28.dp)) {
-                        Text("REAL VALUE (TODAY'S TERMS)", color = Color.White.copy(alpha = 0.6f), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold))
-                        Text("₹1.86L from ₹2.5L nominal", color = Color.White, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold))
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                Button(onClick = {}, modifier = Modifier.fillMaxWidth().height(64.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary), shape = RoundedCornerShape(20.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Save, null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("Save to Portfolio", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    }
-                }
-                Spacer(modifier = Modifier.height(48.dp))
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun XirrResultScreen(onBack: () -> Unit) {
-    Scaffold(
-        containerColor = BrandBackground,
-        topBar = {
-            TopAppBar(
-                title = { Text("XIRR Result", fontWeight = FontWeight.ExtraBold, color = BrandPrimary) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BrandDark) } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        }
-    ) { padding ->
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            item {
-                Text("Returns Composition", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
-                
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = BrandDark), shape = RoundedCornerShape(28.dp)) {
-                    Column(modifier = Modifier.padding(28.dp)) {
-                        Text("NOMINAL XIRR", color = Color.White.copy(alpha = 0.6f), style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold))
-                        Row(verticalAlignment = Alignment.Bottom) {
-                            Text("25.00", color = Color.White, style = MaterialTheme.typography.displayMedium.copy(fontWeight = FontWeight.ExtraBold))
-                            Text("%", color = BrandPrimary, style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold), modifier = Modifier.padding(bottom = 8.dp, start = 4.dp))
-                        }
-                        
-                        Spacer(modifier = Modifier.height(24.dp))
-                        HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
-                        Spacer(modifier = Modifier.height(24.dp))
-                        
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Column {
-                                Text("Real XIRR", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                Text("17.92%", color = BrandGreen, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text("Net Gain", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                Text("₹12,500", color = BrandGreen, fontWeight = FontWeight.ExtraBold, fontSize = 18.sp)
-                            }
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(24.dp)) {
-                    Column(modifier = Modifier.padding(24.dp)) {
-                        Text("PORTFOLIO COMPOSITION", style = MaterialTheme.typography.labelSmall.copy(color = TextGray, fontWeight = FontWeight.ExtraBold))
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Box(modifier = Modifier.fillMaxWidth().height(16.dp).background(DividerColor, CircleShape)) {
-                            Box(modifier = Modifier.fillMaxWidth(0.7f).fillMaxHeight().background(PositiveGreen, CircleShape))
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            CompositionIndicator("Principal (70%)", PositiveGreen)
-                            CompositionIndicator("Profits (30%)", TextGray)
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Button(onClick = {}, modifier = Modifier.fillMaxWidth().height(64.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandDark), shape = RoundedCornerShape(20.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Share, null)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("Export Result", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(48.dp))
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun InflationImpactScreen(onBack: () -> Unit) {
-    var principal by remember { mutableStateOf("1000000") }
-    var duration by remember { mutableStateOf(10f) }
-    var inflation by remember { mutableStateOf(6f) }
-
-    Scaffold(
-        containerColor = BrandBackground,
-        topBar = {
-            TopAppBar(
-                title = { Text("Inflatio Smart", fontWeight = FontWeight.ExtraBold, color = BrandPrimary) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BrandDark) } },
-                actions = { IconButton(onClick = {}) { Icon(Icons.Filled.Notifications, null, tint = BrandDark) } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
-            )
-        }
-    ) { padding ->
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            item {
-                Text("Protect Your Wealth", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
-                Text("Visualise how inflation erodes your purchasing power.", color = TextGray)
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White), 
-                    shape = RoundedCornerShape(24.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        viewModel.lastXirrResult = XirrResultData(
+                            nominalXirr = nominalXirr,
+                            realXirr = realXirr,
+                            netGain = gain
+                        )
+                        viewModel.addHistoryItem(
+                            title = "XIRR (${name.ifBlank { assetType }})",
+                            duration = "Custom Flow",
+                            realValue = realXirr,
+                            nominalValue = nominalXirr,
+                            type = "XIRR"
+                        )
+                        onResult()
+                    }, 
+                    modifier = Modifier.fillMaxWidth().height(64.dp), 
+                    shape = RoundedCornerShape(20.dp), 
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandDark)
                 ) {
-                    Column(modifier = Modifier.padding(24.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Tune, null, tint = BrandPrimary)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text("Parameters", fontWeight = FontWeight.ExtraBold, color = BrandDark)
-                        }
-                        Spacer(modifier = Modifier.height(24.dp))
-                        VibrantTextField(value = principal, onValueChange = { principal = it }, label = "PRINCIPAL AMOUNT (₹)", placeholder = "1000000")
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text("Duration: ${duration.toInt()} Years", fontWeight = FontWeight.Bold)
-                        Slider(value = duration, onValueChange = { duration = it }, valueRange = 1f..30f, colors = SliderDefaults.colors(thumbColor = BrandPrimary))
-                        Text("Expected Inflation: $inflation%", fontWeight = FontWeight.Bold)
-                        Slider(value = inflation, onValueChange = { inflation = it }, valueRange = 0f..15f, colors = SliderDefaults.colors(thumbColor = BrandSecondary))
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = {}, modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandDark)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Filled.Bookmark, null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Save to History", fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                StatResultCard("FUTURE VALUE", "₹5,58,395", "Purchasing Power", InfoBlueBg, BrandPrimary)
-                Spacer(modifier = Modifier.height(16.dp))
-                StatResultCard("TOTAL EROSION", "-44.16%", "Value Lost", ErrorRedBg, NegativeRed)
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Text("Erosion Timeline", fontWeight = FontWeight.ExtraBold, color = BrandDark)
-                Spacer(modifier = Modifier.height(16.dp))
-                Box(modifier = Modifier.fillMaxWidth().height(220.dp).background(Color.White, RoundedCornerShape(20.dp))) 
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Card(colors = CardDefaults.cardColors(containerColor = InfoBlueBg), shape = RoundedCornerShape(16.dp)) {
-                    Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Info, null, tint = BrandPrimary)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text("In 10 years, a basket of goods costing ₹1L today will cost ~₹1.8L.", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = BrandPrimary)
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                Card(colors = CardDefaults.cardColors(containerColor = SuccessGreenBg), shape = RoundedCornerShape(16.dp)) {
-                   Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                       Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = BrandGreen)
-                       Spacer(modifier = Modifier.width(16.dp))
-                       Text("You need at least 6.0% returns to maintain purchasing power.", color = BrandGreen, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                   }
+                    Icon(Icons.Filled.Calculate, null, tint = Color.White)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Analyze Cash Flows", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
                 }
                 Spacer(modifier = Modifier.height(48.dp))
             }
@@ -531,118 +463,223 @@ fun InflationImpactScreen(onBack: () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SipCalculatorScreen(onBack: () -> Unit) {
-    var monthlyInvestment by remember { mutableStateOf("10000") }
-    var expectedReturn by remember { mutableStateOf(12f) }
-    var duration by remember { mutableStateOf(10f) }
-    var inflation by remember { mutableStateOf(6f) }
+fun CagrResultScreen(onBack: () -> Unit, viewModel: AppViewModel) {
+    val result = viewModel.lastCagrResult ?: return
 
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
             TopAppBar(
-                title = { Text("Inflatio Smart", fontWeight = FontWeight.ExtraBold, color = BrandPrimary) },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null, tint = BrandDark) } },
-                actions = { IconButton(onClick = {}) { Icon(Icons.Filled.Notifications, null, tint = BrandDark) } }
+                title = { Text("CAGR Results", fontWeight = FontWeight.ExtraBold) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         }
     ) { padding ->
-        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            item {
-                Text("SIP Calculator", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
-                Text("Project your future wealth with inflation adjustment.", color = TextGray)
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(24.dp), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
-                    Column(modifier = Modifier.padding(24.dp)) {
-                        VibrantSliderHeader("MONTHLY INVESTMENT", "₹$monthlyInvestment", BrandDark)
-                        Slider(value = 10000f, onValueChange = {}, valueRange = 500f..100000f, colors = SliderDefaults.colors(thumbColor = BrandPrimary))
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        VibrantSliderHeader("EXPECTED RETURN (P.A)", "${expectedReturn.toInt()}%", BrandGreen)
-                        Slider(value = expectedReturn, onValueChange = { expectedReturn = it }, valueRange = 1f..30f, colors = SliderDefaults.colors(thumbColor = BrandGreen))
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        VibrantSliderHeader("DURATION (YEARS)", "${duration.toInt()}Y", BrandSecondary)
-                        Slider(value = duration, onValueChange = { duration = it }, valueRange = 1f..40f, colors = SliderDefaults.colors(thumbColor = BrandSecondary))
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        VibrantSliderHeader("INFLATION RATE (P.A)", "${inflation.toInt()}%", NegativeRed)
-                        Slider(value = inflation, onValueChange = { inflation = it }, valueRange = 0f..15f, colors = SliderDefaults.colors(thumbColor = NegativeRed))
-                    }
+        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp).verticalScroll(rememberScrollState())) {
+            StatResultCard("NOMINAL CAGR", result.nominalCagr, "Absolute growth rate", BrandPrimary, Color.White)
+            Spacer(modifier = Modifier.height(16.dp))
+            StatResultCard("REAL CAGR", result.realCagr, "Inflation-adjusted growth", BrandGreen, Color.White)
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            Text("Asset Valuation", fontWeight = FontWeight.ExtraBold, color = BrandDark)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(24.dp)) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    InfoValueRow("Final Value (Nominal)", result.finalNominal, Modifier)
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = DividerColor)
+                    InfoValueRow("Final Value (Real)", result.finalReal, Modifier)
                 }
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(24.dp)) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text("WEALTH PROJECTION", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = TextGray))
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Box(modifier = Modifier.fillMaxWidth().height(180.dp).background(BrandPrimary.copy(alpha = 0.05f), RoundedCornerShape(16.dp)))
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = BrandDark), shape = RoundedCornerShape(20.dp)) {
-                    Column(modifier = Modifier.padding(24.dp)) {
-                        Text("TOTAL INVESTED", style = MaterialTheme.typography.labelSmall.copy(color = Color.White.copy(alpha = 0.6f), fontWeight = FontWeight.Bold))
-                        Text("₹12,00,000", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, color = Color.White))
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(20.dp))
-                
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    VibrantSummaryCard("MATURITY", "₹23,00,387", "+91.7%", PositiveGreen, Modifier.weight(1f))
-                    VibrantSummaryCard("REAL VALUE", "₹15,84,212", "Inf-Adj", BrandPrimary, Modifier.weight(1f))
-                }
-                
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                Card(colors = CardDefaults.cardColors(containerColor = BrandDark), shape = RoundedCornerShape(20.dp)) {
-                    Row(modifier = Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Filled.Insights, null, tint = BrandGreen)
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text("Real wealth is 31% lower than nominal due to inflation. Strategy: Invest 6% more monthly.", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    }
-                }
-                Spacer(modifier = Modifier.height(48.dp))
+            }
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(onClick = onBack, modifier = Modifier.fillMaxWidth().height(64.dp), shape = RoundedCornerShape(20.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandDark)) {
+                Text("Back to Calculator", fontWeight = FontWeight.Bold)
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun InfoValueRow(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(vertical = 8.dp)) {
-        Text(label, style = MaterialTheme.typography.labelSmall.copy(color = TextGray, fontWeight = FontWeight.Bold))
-        Spacer(modifier = Modifier.height(4.dp))
-        Surface(color = BrandBackground, shape = RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
-            Text(value, modifier = Modifier.padding(16.dp), fontWeight = FontWeight.ExtraBold, color = BrandDark, fontSize = 16.sp)
+fun XirrResultScreen(onBack: () -> Unit, viewModel: AppViewModel) {
+    val result = viewModel.lastXirrResult ?: return
+
+    Scaffold(
+        containerColor = BrandBackground,
+        topBar = {
+            TopAppBar(
+                title = { Text("XIRR Analysis", fontWeight = FontWeight.ExtraBold) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            )
         }
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp).verticalScroll(rememberScrollState())) {
+            StatResultCard("PERSONAL XIRR", result.nominalXirr, "Time-weighted return", BrandSecondary, Color.White)
+            Spacer(modifier = Modifier.height(16.dp))
+            StatResultCard("REAL XIRR", result.realXirr, "Purchasing power growth", BrandPrimary, Color.White)
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            Text("Profitability Metrics", fontWeight = FontWeight.ExtraBold, color = BrandDark)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(24.dp)) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    InfoValueRow("Total Net Gain", result.netGain, Modifier)
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = DividerColor)
+                    InfoValueRow("Tax Efficiency", "High (12.5%)", Modifier)
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            Card(colors = CardDefaults.cardColors(containerColor = SuccessGreenBg), shape = RoundedCornerShape(20.dp)) {
+                Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Verified, null, tint = BrandGreen)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Your performance beats inflation by 11.84%", color = BrandGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(onClick = onBack, modifier = Modifier.fillMaxWidth().height(64.dp), shape = RoundedCornerShape(20.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandDark)) {
+                Text("Back to Analyzer", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun InflationImpactScreen(onBack: () -> Unit, viewModel: AppViewModel) {
+    var amount by remember { mutableStateOf("10,00,000") }
+    var years by remember { mutableStateOf("10") }
+    var rate by remember { mutableStateOf("6.0") }
+
+    Scaffold(
+        containerColor = BrandBackground,
+        topBar = {
+            TopAppBar(
+                title = { Text("Inflation Impact", fontWeight = FontWeight.ExtraBold) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            )
+        }
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp).verticalScroll(rememberScrollState())) {
+            Text("Future Purchasing Power", style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
+            Text("Visualize how inflation erodes your wealth over time.", color = TextGray)
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            VibrantTextField(value = amount, onValueChange = { amount = it }, label = "CURRENT AMOUNT (₹)", placeholder = "0.00")
+            VibrantTextField(value = years, onValueChange = { years = it }, label = "TIME HORIZON (YEARS)", placeholder = "0")
+            VibrantTextField(value = rate, onValueChange = { rate = it }, label = "EXPECTED INFLATION (%)", placeholder = "6.0")
+            
+            Spacer(modifier = Modifier.height(40.dp))
+            
+            val amt = amount.replace(",", "").toDoubleOrNull() ?: 1000000.0
+            val t = years.toDoubleOrNull() ?: 10.0
+            val r = rate.toDoubleOrNull() ?: 6.0
+            val futureReal = amt / Math.pow(1 + r / 100, t)
+            
+            StatResultCard("REAL VALUE", String.format("₹%,.0f", futureReal), "Value in today's money", Color(0xFFFF6B6B), Color.White)
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Card(colors = CardDefaults.cardColors(containerColor = BrandDark.copy(alpha = 0.05f)), shape = RoundedCornerShape(20.dp)) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Text("In $t years, your ₹${String.format("%,.0f", amt)} will only buy what ₹${String.format("%,.0f", futureReal)} buys today.", color = BrandDark, fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SipCalculatorScreen(onBack: () -> Unit, viewModel: AppViewModel) {
+    var monthlyInvestment by remember { mutableStateOf(50000f) }
+    var annualReturn by remember { mutableStateOf(12f) }
+    var durationYears by remember { mutableStateOf(15f) }
+
+    Scaffold(
+        containerColor = BrandBackground,
+        topBar = {
+            TopAppBar(
+                title = { Text("SIP Planner", fontWeight = FontWeight.ExtraBold) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+            )
+        }
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp).verticalScroll(rememberScrollState())) {
+            Text("Wealth Projection", style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
+            Text("Compound your monthly savings into institutional wealth.", color = TextGray)
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            VibrantSliderHeader("MONTHLY INVESTMENT", "₹${String.format("%,.0f", monthlyInvestment)}", BrandPrimary)
+            Slider(value = monthlyInvestment, onValueChange = { monthlyInvestment = it }, valueRange = 1000f..500000f, colors = SliderDefaults.colors(thumbColor = BrandPrimary, activeTrackColor = BrandPrimary))
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            VibrantSliderHeader("EXPECTED ANNUAL RETURN", "${String.format("%.1f", annualReturn)}%", BrandGreen)
+            Slider(value = annualReturn, onValueChange = { annualReturn = it }, valueRange = 1f..30f, colors = SliderDefaults.colors(thumbColor = BrandGreen, activeTrackColor = BrandGreen))
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            VibrantSliderHeader("INVESTMENT DURATION", "${durationYears.toInt()} Years", BrandSecondary)
+            Slider(value = durationYears, onValueChange = { durationYears = it }, valueRange = 1f..40f, colors = SliderDefaults.colors(thumbColor = BrandSecondary, activeTrackColor = BrandSecondary))
+            
+            Spacer(modifier = Modifier.height(40.dp))
+            
+            val p = monthlyInvestment.toDouble()
+            val r = annualReturn.toDouble() / 12 / 100
+            val n = durationYears.toInt() * 12
+            val totalValue = p * ((Math.pow(1 + r, n.toDouble()) - 1) / r) * (1 + r)
+            val totalInvested = p * n
+            
+            StatResultCard("ESTIMATED WEALTH", String.format("₹%,.0f", totalValue), "Total value after compounding", BrandDark, Color.White)
+            
+            Spacer(modifier = Modifier.height(24.dp))
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(24.dp)) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    InfoValueRow("Total Invested", String.format("₹%,.0f", totalInvested), Modifier)
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = DividerColor)
+                    InfoValueRow("Estimated Returns", String.format("₹%,.0f", totalValue - totalInvested), Modifier)
+                }
+            }
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+fun InfoValueRow(label: String, value: String, modifier: Modifier) {
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label, color = TextGray, fontWeight = FontWeight.Bold)
+        Text(value, color = BrandDark, fontWeight = FontWeight.ExtraBold)
     }
 }
 
 @Composable
 fun VibrantSliderHeader(label: String, value: String, color: Color) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.ExtraBold, color = TextGray))
+        Text(label, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
         Text(value, fontWeight = FontWeight.ExtraBold, color = color)
     }
 }
 
 @Composable
-fun StatResultCard(label: String, value: String, description: String, bgColor: Color, valueColor: Color) {
+fun StatResultCard(title: String, value: String, description: String, color: Color, valueColor: Color) {
     Card(
-        modifier = Modifier.fillMaxWidth(), 
-        colors = CardDefaults.cardColors(containerColor = bgColor),
-        shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = color),
+        shape = RoundedCornerShape(28.dp)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
-            Text(label, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = valueColor.copy(alpha = 0.7f)))
+            Text(title, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.ExtraBold, color = valueColor.copy(alpha = 0.8f), letterSpacing = 1.sp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(value, style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.ExtraBold, color = valueColor))
             Text(description, style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = valueColor.copy(alpha = 0.6f)))
         }
@@ -650,49 +687,105 @@ fun StatResultCard(label: String, value: String, description: String, bgColor: C
 }
 
 @Composable
-fun XirrFlowRow(date: String, amount: String, color: Color) {
+fun XirrFlowRow(
+    date: String, 
+    amount: String, 
+    color: Color,
+    onDateChange: (String) -> Unit,
+    onAmountChange: (String) -> Unit,
+    onDelete: () -> Unit
+) {
+    val context = LocalContext.current
+    val calendar = Calendar.getInstance()
+    
+    // Parse current date if possible to set picker start date
+    try {
+        val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+        sdf.parse(date)?.let { calendar.time = it }
+    } catch (e: Exception) {}
+
+    val datePickerDialog = android.app.DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            val newDate = String.format("%02d/%02d/%d", dayOfMonth, month + 1, year)
+            onDateChange(newDate)
+        },
+        calendar.get(Calendar.YEAR),
+        calendar.get(Calendar.MONTH),
+        calendar.get(Calendar.DAY_OF_MONTH)
+    )
+
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        OutlinedTextField(
-            value = date,
-            onValueChange = {},
-            modifier = Modifier.weight(1f).height(56.dp),
-            shape = RoundedCornerShape(16.dp),
-            trailingIcon = { Icon(Icons.Filled.CalendarMonth, null, tint = BrandPrimary, modifier = Modifier.size(18.dp)) },
-            colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = DividerColor)
-        )
+        Box(modifier = Modifier.weight(1f)) {
+            OutlinedTextField(
+                value = date,
+                onValueChange = {},
+                readOnly = true,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                trailingIcon = { 
+                    IconButton(onClick = { datePickerDialog.show() }) {
+                        Icon(Icons.Filled.CalendarMonth, null, tint = BrandPrimary, modifier = Modifier.size(18.dp))
+                    }
+                },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                    unfocusedBorderColor = DividerColor,
+                    focusedBorderColor = BrandPrimary,
+                    unfocusedContainerColor = Color.White,
+                    focusedContainerColor = Color.White
+                )
+            )
+            // Invisible clickable layer to trigger picker on whole field
+            Box(modifier = Modifier.matchParentSize().clickable { datePickerDialog.show() })
+        }
         Spacer(modifier = Modifier.width(12.dp))
         OutlinedTextField(
             value = amount,
-            onValueChange = {},
+            onValueChange = onAmountChange,
             modifier = Modifier.weight(1f).height(56.dp),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
             shape = RoundedCornerShape(16.dp),
             prefix = { Text("₹ ", color = color, fontWeight = FontWeight.ExtraBold) },
-            colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = DividerColor),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = color,
+                unfocusedTextColor = color,
+                unfocusedBorderColor = DividerColor,
+                focusedBorderColor = BrandPrimary,
+                unfocusedContainerColor = Color.White,
+                focusedContainerColor = Color.White
+            ),
             textStyle = androidx.compose.ui.text.TextStyle(color = color, fontWeight = FontWeight.ExtraBold)
         )
         Spacer(modifier = Modifier.width(12.dp))
-        IconButton(onClick = {}, modifier = Modifier.size(44.dp).background(BrandBackground, RoundedCornerShape(12.dp))) {
+        IconButton(onClick = onDelete, modifier = Modifier.size(44.dp).background(BrandBackground, RoundedCornerShape(12.dp))) {
             Icon(Icons.Filled.Delete, null, tint = NegativeRed, modifier = Modifier.size(18.dp))
         }
     }
 }
+
+data class CashFlowData(
+    val date: String,
+    val amount: Double
+)
 
 @Composable
 fun CompositionIndicator(label: String, color: Color) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(modifier = Modifier.size(10.dp).background(color, CircleShape))
         Spacer(modifier = Modifier.width(8.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall.copy(color = BrandDark, fontWeight = FontWeight.ExtraBold))
+        Text(label, style = MaterialTheme.typography.labelSmall.copy(color = BrandDark, fontWeight = FontWeight.Bold))
     }
 }
 
 @Composable
-fun VibrantSummaryCard(label: String, value: String, subValue: String, color: Color, modifier: Modifier) {
-    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(20.dp), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+fun VibrantSummaryCard(title: String, value: String, description: String, color: Color, modifier: Modifier) {
+    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = color.copy(alpha = 0.1f)), shape = RoundedCornerShape(20.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(label, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = TextGray))
-            Text(value, fontWeight = FontWeight.ExtraBold, color = BrandDark, fontSize = 16.sp)
-            Text(subValue, color = color, fontSize = 12.sp, fontWeight = FontWeight.ExtraBold)
+            Text(title, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.ExtraBold)
+            Text(value, style = MaterialTheme.typography.titleLarge, color = color, fontWeight = FontWeight.ExtraBold)
+            Text(description, style = MaterialTheme.typography.bodySmall, color = color.copy(alpha = 0.7f), fontWeight = FontWeight.Bold)
         }
     }
 }

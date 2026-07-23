@@ -4,10 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.project1.data.AppViewModel
 import com.example.project1.screens.*
 import com.example.project1.ui.theme.Project1Theme
 
@@ -17,14 +19,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             Project1Theme {
-                AppNavigation()
+                val appViewModel: AppViewModel = viewModel()
+                AppNavigation(appViewModel)
             }
         }
     }
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(viewModel: AppViewModel) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "landing") {
@@ -42,14 +45,20 @@ fun AppNavigation() {
         }
         composable("signup") {
             SignUpScreen(
-                onSignUp = { navController.navigate("home") },
+                onSignUp = { 
+                    viewModel.refresh()
+                    navController.navigate("home") 
+                },
                 onLogin = { navController.navigate("login") },
                 onGoogleLogin = { navController.navigate("google_selector") }
             )
         }
         composable("login") {
             LoginScreen(
-                onLogin = { navController.navigate("home") },
+                onLogin = { 
+                    viewModel.refresh()
+                    navController.navigate("home") 
+                },
                 onSignUp = { navController.navigate("signup") },
                 onGoogleLogin = { navController.navigate("google_selector") },
                 onForgotPassword = { navController.navigate("forgot_password") }
@@ -63,12 +72,16 @@ fun AppNavigation() {
         }
         composable("google_selector") {
             GoogleAccountSelectorScreen(
-                onAccountSelected = { navController.navigate("home") },
+                onAccountSelected = { 
+                    viewModel.refresh()
+                    navController.navigate("home") 
+                },
+                onUseAnotherAccount = { navController.navigate("signup") },
                 onCancel = { navController.popBackStack() }
             )
         }
         composable("home") {
-            HomeScreen(navController)
+            HomeScreen(navController, viewModel)
         }
         composable("portfolio") {
             PortfolioScreen(navController)
@@ -77,10 +90,13 @@ fun AppNavigation() {
             CalculatorListScreen(navController)
         }
         composable("history") {
-            HistoryScreen(navController)
+            HistoryScreen(navController, viewModel)
         }
         composable("settings") {
-            SettingsScreen(navController)
+            SettingsScreen(navController, viewModel)
+        }
+        composable("notifications") {
+            NotificationScreen(onBack = { navController.popBackStack() })
         }
         
         // Detailed screens
@@ -89,7 +105,9 @@ fun AppNavigation() {
         }
         composable("add_investment") {
             AddInvestmentFlow(
-                onFinish = { navController.navigate("home") },
+                onFinish = { 
+                    navController.popBackStack() 
+                },
                 onBack = { navController.popBackStack() }
             )
         }
@@ -108,43 +126,49 @@ fun AppNavigation() {
             CagrCalculatorScreen(
                 assetType = assetType, 
                 onBack = { navController.popBackStack() },
-                onResult = { navController.navigate("cagr_result") }
+                onResult = { navController.navigate("cagr_result") },
+                viewModel = viewModel
             )
         }
         composable("cagr_result") {
-            CagrResultScreen(onBack = { navController.popBackStack() })
+            CagrResultScreen(onBack = { navController.popBackStack() }, viewModel = viewModel)
         }
         composable("xirr_calc/{assetType}") { backStackEntry ->
             val assetType = backStackEntry.arguments?.getString("assetType") ?: "Stocks"
             XirrCalculatorScreen(
                 assetType = assetType, 
                 onBack = { navController.popBackStack() },
-                onResult = { navController.navigate("xirr_result") }
+                onResult = { navController.navigate("xirr_result") },
+                viewModel = viewModel
             )
         }
         composable("xirr_result") {
-            XirrResultScreen(onBack = { navController.popBackStack() })
+            XirrResultScreen(onBack = { navController.popBackStack() }, viewModel = viewModel)
         }
         composable("personal_info") {
-            PersonalInfoScreen(onBack = { navController.popBackStack() })
+            val context = androidx.compose.ui.platform.LocalContext.current
+            LaunchedEffect(Unit) {
+                context.startActivity(android.content.Intent(context, com.example.project1.activities.ProfileActivity::class.java))
+                navController.popBackStack()
+            }
         }
         composable("login_security") {
-            LoginSecurityScreen(onBack = { navController.popBackStack() })
+            LoginSecurityScreen(onBack = { navController.popBackStack() }, viewModel)
         }
         composable("default_currency") {
-            DefaultCurrencyScreen(onBack = { navController.popBackStack() })
+            DefaultCurrencyScreen(onBack = { navController.popBackStack() }, viewModel)
         }
         composable("region_language") {
-            RegionLanguageScreen(onBack = { navController.popBackStack() })
+            RegionLanguageScreen(onBack = { navController.popBackStack() }, viewModel)
         }
         composable("inflation_benchmarks") {
-            InflationBenchmarksScreen(onBack = { navController.popBackStack() })
+            InflationBenchmarksScreen(onBack = { navController.popBackStack() }, viewModel)
         }
         composable("tax_slabs") {
-            TaxSlabScreen(onBack = { navController.popBackStack() })
+            TaxSlabScreen(onBack = { navController.popBackStack() }, viewModel)
         }
         composable("alert_preferences") {
-            AlertPreferencesScreen(onBack = { navController.popBackStack() })
+            AlertPreferencesScreen(onBack = { navController.popBackStack() }, viewModel)
         }
         composable("email_summaries") {
             EmailSummariesScreen(onBack = { navController.popBackStack() })
@@ -153,16 +177,29 @@ fun AppNavigation() {
             ExportPortfolioScreen(onBack = { navController.popBackStack() })
         }
         composable("inflation_impact") {
-            InflationImpactScreen(onBack = { navController.popBackStack() })
+            InflationImpactScreen(onBack = { navController.popBackStack() }, viewModel = viewModel)
+        }
+        composable("performance_analytics") {
+            PerformanceAnalyticsScreen(onBack = { navController.popBackStack() }, viewModel)
         }
         composable("sip_calc") {
-            SipCalculatorScreen(onBack = { navController.popBackStack() })
+            SipCalculatorScreen(onBack = { navController.popBackStack() }, viewModel = viewModel)
         }
         composable("support") {
             SupportScreen(onBack = { navController.popBackStack() })
         }
-        composable("tax_slabs") {
-            TaxSlabScreen(onBack = { navController.popBackStack() })
+        composable("help_center") {
+            HelpCenterScreen(
+                onBack = { navController.popBackStack() },
+                onContactSupport = { navController.navigate("support") },
+                onTopicSelected = { topic ->
+                    navController.navigate("help_article/$topic")
+                }
+            )
+        }
+        composable("help_article/{topic}") { backStackEntry ->
+            val topic = backStackEntry.arguments?.getString("topic") ?: ""
+            HelpArticleScreen(topic = topic, onBack = { navController.popBackStack() })
         }
     }
 }

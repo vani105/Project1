@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.example.project1.ui.theme.*
 
 @Composable
-fun GoogleAccountSelectorScreen(onAccountSelected: () -> Unit, onCancel: () -> Unit) {
+fun GoogleAccountSelectorScreen(onAccountSelected: () -> Unit, onUseAnotherAccount: () -> Unit, onCancel: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -75,7 +75,7 @@ fun GoogleAccountSelectorScreen(onAccountSelected: () -> Unit, onCancel: () -> U
                         GoogleAccountItem(account, onAccountSelected)
                     }
                     item {
-                        AddAccountItem()
+                        AddAccountItem(onUseAnotherAccount)
                     }
                 }
 
@@ -134,9 +134,9 @@ fun GoogleAccountItem(account: GoogleAccount, onClick: () -> Unit) {
 }
 
 @Composable
-fun AddAccountItem() {
+fun AddAccountItem(onClick: () -> Unit) {
     Surface(
-        onClick = {},
+        onClick = onClick,
         color = Color.Transparent,
         shape = RoundedCornerShape(12.dp)
     ) {

@@ -80,6 +80,8 @@ fun VibrantLabelField(label: String, placeholder: String, value: String, onValue
             placeholder = { Text(placeholder, color = TextGray.copy(alpha = 0.5f)) },
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
                 unfocusedBorderColor = DividerColor,
                 focusedBorderColor = BrandPrimary,
                 unfocusedContainerColor = Color.White,
@@ -123,6 +125,8 @@ fun VibrantTextField(
             } else null,
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
                 unfocusedBorderColor = DividerColor,
                 focusedBorderColor = BrandPrimary,
                 unfocusedContainerColor = Color.White,

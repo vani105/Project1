@@ -16,12 +16,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.project1.data.AppViewModel
 import com.example.project1.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TaxSlabScreen(onBack: () -> Unit) {
-    var selectedSlab by remember { mutableStateOf(2) }
+fun TaxSlabScreen(onBack: () -> Unit, viewModel: AppViewModel) {
+    var selectedSlab by remember { mutableIntStateOf(2) }
 
     Scaffold(
         containerColor = BrandBackground,
@@ -37,7 +38,7 @@ fun TaxSlabScreen(onBack: () -> Unit) {
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             item {
                 Text("Select Your Slab", style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
-                Text("Precise tax modeling ensures your 'Real Returns' are accurate.", color = TextGray)
+                Text("Precise tax modeling ensures your 'Real Returns' are accurate.", color = Color.Black, fontWeight = FontWeight.Bold)
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 
@@ -73,7 +74,13 @@ fun TaxSlabScreen(onBack: () -> Unit) {
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text("Tax Liability", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                Text("-₹2,48,000", color = NegativeRed, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold))
+                                val taxValue = when(selectedSlab) {
+                                    0 -> 0
+                                    1 -> 124000
+                                    2 -> 248000
+                                    else -> 372000
+                                }
+                                Text("-₹$taxValue", color = NegativeRed, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold))
                             }
                         }
                         
@@ -82,11 +89,20 @@ fun TaxSlabScreen(onBack: () -> Unit) {
                         Spacer(modifier = Modifier.height(24.dp))
                         
                         Text("Net Real Return", color = BrandGreen, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
-                        Text("₹9,92,000", color = Color.White, style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.ExtraBold))
+                        val netValue = when(selectedSlab) {
+                            0 -> 1240000
+                            1 -> 1116000
+                            2 -> 992000
+                            else -> 868000
+                        }
+                        Text("₹$netValue", color = Color.White, style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.ExtraBold))
                         
                         Spacer(modifier = Modifier.height(32.dp))
                         Button(
-                            onClick = {}, 
+                            onClick = {
+                                viewModel.syncPreferences()
+                                onBack()
+                            }, 
                             modifier = Modifier.fillMaxWidth().height(60.dp), 
                             colors = ButtonDefaults.buttonColors(containerColor = BrandGreen),
                             shape = RoundedCornerShape(16.dp)
@@ -117,7 +133,7 @@ fun VibrantTaxSlabItem(title: String, subtitle: String, index: Int, isSelected: 
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(title, fontWeight = FontWeight.ExtraBold, color = BrandDark)
-                Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(color = TextGray, fontWeight = FontWeight.Bold))
+                Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(color = Color.Black, fontWeight = FontWeight.Bold))
             }
             if (isSelected) {
                 Icon(Icons.Default.CheckCircle, null, tint = BrandPrimary, modifier = Modifier.size(24.dp))

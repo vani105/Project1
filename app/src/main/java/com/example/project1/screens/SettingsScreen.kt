@@ -20,10 +20,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.project1.data.FirebaseManager
+import com.example.project1.data.UserProfile
 import com.example.project1.ui.theme.*
+import com.example.project1.data.AppViewModel
+import kotlinx.coroutines.launch
 
 @Composable
-fun SettingsScreen(navController: NavController) {
+fun SettingsScreen(navController: NavController, viewModel: AppViewModel) {
+    LaunchedEffect(Unit) {
+        viewModel.refresh()
+    }
     AppNavigationWrapper(navController, "settings") { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().background(BrandBackground).padding(padding).padding(horizontal = 16.dp)) {
             item {
@@ -34,7 +41,7 @@ fun SettingsScreen(navController: NavController) {
                     }
                 }
                 
-                VibrantProfileSection()
+                VibrantProfileSection(viewModel.userProfile)
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 
@@ -44,27 +51,7 @@ fun SettingsScreen(navController: NavController) {
                 }
                 
                 VibrantSettingsGroup("PREFERENCES") {
-                    VibrantSettingsItem(Icons.Default.Payments, "Default Currency (₹)") { navController.navigate("default_currency") }
-                    VibrantSettingsItem(Icons.Default.Language, "Region & Language") { navController.navigate("region_language") }
-                }
-                
-                VibrantSettingsGroup("INFLATION & RATES") {
-                    VibrantSettingsItem(Icons.Default.TrendingUp, "Inflation Benchmarks", "Auto") { navController.navigate("inflation_benchmarks") }
-                    VibrantSettingsItem(Icons.Default.Percent, "Tax Slab Settings") { navController.navigate("tax_slabs") }
-                }
-                
-                VibrantSettingsGroup("NOTIFICATIONS") {
-                    VibrantSettingsItem(Icons.Default.NotificationsNone, "Alert Preferences") { navController.navigate("alert_preferences") }
-                    VibrantSettingsItem(Icons.Default.Email, "Email Summaries") { navController.navigate("email_summaries") }
-                }
-                
-                VibrantSettingsGroup("DATA & PRIVACY") {
-                    VibrantSettingsItem(Icons.Default.CloudDownload, "Export Portfolio Data") { navController.navigate("export_data") }
-                    VibrantSettingsItem(Icons.Default.PrivacyTip, "Privacy Settings")
-                }
-                
-                VibrantSettingsGroup("HELP & SUPPORT") {
-                    VibrantSettingsItem(Icons.Default.HelpOutline, "Help Center")
+                    VibrantSettingsItem(Icons.Default.HelpOutline, "Help Center") { navController.navigate("help_center") }
                     VibrantSettingsItem(Icons.Default.ChatBubbleOutline, "Contact Support") { navController.navigate("support") }
                     VibrantSettingsItem(Icons.Default.Info, "App Version", "v2.4.1")
                 }
@@ -72,7 +59,13 @@ fun SettingsScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 Button(
-                    onClick = {},
+                    onClick = {
+                        FirebaseManager.logout()
+                        viewModel.userProfile = null // Clear profile state
+                        navController.navigate("landing") {
+                            popUpTo(0)
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth().height(64.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = NegativeRed.copy(alpha = 0.1f)),
                     shape = RoundedCornerShape(20.dp),
@@ -92,7 +85,20 @@ fun SettingsScreen(navController: NavController) {
 }
 
 @Composable
-fun VibrantProfileSection() {
+fun VibrantProfileSection(profile: UserProfile?) {
+    val maskedEmail = remember(profile?.email) {
+        val email = profile?.email ?: ""
+        if (email.contains("@")) {
+            val parts = email.split("@")
+            val name = parts[0]
+            if (name.length > 2) {
+                name.take(2) + "****@" + parts[1]
+            } else {
+                "****@" + parts[1]
+            }
+        } else email
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -105,11 +111,13 @@ fun VibrantProfileSection() {
             }
             Spacer(modifier = Modifier.width(20.dp))
             Column {
-                Text("Invest Manager", fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = BrandDark)
-                Text("Institutional Access • Premium", style = MaterialTheme.typography.bodySmall.copy(color = TextGray, fontWeight = FontWeight.Bold))
-                Spacer(modifier = Modifier.height(6.dp))
-                Surface(color = BrandPrimary, shape = RoundedCornerShape(10.dp)) {
-                    Text("PRO MEMBER", color = Color.White, modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
+                Text(profile?.fullName ?: "Invest Manager", fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, color = BrandDark)
+                Text(maskedEmail, style = MaterialTheme.typography.bodySmall.copy(color = Color.Black, fontWeight = FontWeight.Bold))
+                if (profile?.isPro == true) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Surface(color = BrandPrimary, shape = RoundedCornerShape(10.dp)) {
+                        Text("PRO MEMBER", color = Color.White, modifier = Modifier.padding(horizontal = 10.dp, vertical = 2.dp), fontSize = 10.sp, fontWeight = FontWeight.ExtraBold)
+                    }
                 }
             }
         }
@@ -148,7 +156,7 @@ fun VibrantSettingsItem(icon: ImageVector, title: String, badge: String? = null,
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                 }
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = TextGray)
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null, tint = BrandDark)
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = DividerColor.copy(alpha = 0.5f))
         }
@@ -157,7 +165,7 @@ fun VibrantSettingsItem(icon: ImageVector, title: String, badge: String? = null,
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PersonalInfoScreen(onBack: () -> Unit) {
+fun PersonalInfoScreen(onBack: () -> Unit, viewModel: AppViewModel) {
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
@@ -172,13 +180,13 @@ fun PersonalInfoScreen(onBack: () -> Unit) {
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
            item {
                 Spacer(modifier = Modifier.height(16.dp))
-                VibrantProfilePictureEdit()
+                VibrantProfilePictureEdit(viewModel.userProfile)
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 
-                VibrantInfoField("Full Name", "Alexander Sterling")
-                VibrantInfoField("Email Address", "a.sterling@realreturns.io", isVerified = true)
-                VibrantInfoField("Phone Number", "+1 (555) 0123-456")
+                VibrantInfoField("Full Name", viewModel.userProfile?.fullName ?: "N/A")
+                VibrantInfoField("Email Address", viewModel.userProfile?.email ?: "N/A", isVerified = true)
+                VibrantInfoField("Phone Number", viewModel.userProfile?.phoneNumber ?: "N/A")
                 VibrantInfoField("Date of Birth", "05/12/1985")
                 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -188,13 +196,13 @@ fun PersonalInfoScreen(onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(40.dp))
                 
                 Button(
-                    onClick = {}, 
+                    onClick = onBack, 
                     modifier = Modifier.fillMaxWidth().height(64.dp), 
                     colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary), 
                     shape = RoundedCornerShape(20.dp),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
                 ) {
-                    Text("Save Changes", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("Save Changes", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.White)
                 }
                 Spacer(modifier = Modifier.height(48.dp))
            }
@@ -203,7 +211,7 @@ fun PersonalInfoScreen(onBack: () -> Unit) {
 }
 
 @Composable
-fun VibrantProfilePictureEdit() {
+fun VibrantProfilePictureEdit(profile: UserProfile?) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -220,8 +228,8 @@ fun VibrantProfilePictureEdit() {
                 }
             }
             Spacer(modifier = Modifier.height(20.dp))
-            Text("Alexander Sterling", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = BrandDark)
-            Text("alex.s@premium.io", style = MaterialTheme.typography.bodySmall.copy(color = TextGray, fontWeight = FontWeight.Bold))
+            Text(profile?.fullName ?: "Invest Manager", fontWeight = FontWeight.ExtraBold, fontSize = 22.sp, color = BrandDark)
+            Text(profile?.email ?: "user@example.com", style = MaterialTheme.typography.bodySmall.copy(color = Color.Black, fontWeight = FontWeight.Bold))
             Spacer(modifier = Modifier.height(24.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Button(onClick = {}, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = BrandBackground), elevation = null) { 
@@ -244,7 +252,13 @@ fun VibrantInfoField(label: String, value: String, isVerified: Boolean = false) 
             modifier = Modifier.fillMaxWidth(),
             readOnly = true,
             shape = RoundedCornerShape(16.dp),
-            colors = OutlinedTextFieldDefaults.colors(unfocusedContainerColor = Color.White, focusedContainerColor = Color.White, unfocusedBorderColor = DividerColor),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color.Black,
+                unfocusedTextColor = Color.Black,
+                unfocusedContainerColor = Color.White, 
+                focusedContainerColor = Color.White, 
+                unfocusedBorderColor = DividerColor
+            ),
             trailingIcon = if (isVerified) { {
                 Surface(color = BrandGreen.copy(alpha = 0.1f), shape = RoundedCornerShape(10.dp), modifier = Modifier.padding(end = 8.dp)) {
                     Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -266,7 +280,7 @@ fun VibrantDataPrivacyNote() {
             Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text("Institutional-Grade Security", fontWeight = FontWeight.ExtraBold, color = BrandDark)
-                Text("Your data is encrypted using AES-256 and stored in compliant data centers.", style = MaterialTheme.typography.bodySmall.copy(color = BrandDark.copy(alpha = 0.7f), fontWeight = FontWeight.Bold))
+                Text("Your data is encrypted using AES-256 and stored in compliant data centers.", style = MaterialTheme.typography.bodySmall.copy(color = Color.Black, fontWeight = FontWeight.Bold))
             }
         }
     }
@@ -274,10 +288,63 @@ fun VibrantDataPrivacyNote() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginSecurityScreen(onBack: () -> Unit) {
-    var currentPassword by remember { mutableStateOf("") }
+fun LoginSecurityScreen(onBack: () -> Unit, viewModel: AppViewModel) {
     var newPassword by remember { mutableStateOf("") }
-    var biometricsEnabled by remember { mutableStateOf(true) }
+    var currentPassword by remember { mutableStateOf("") }
+    var showReauthDialog by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    
+    val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    if (showReauthDialog) {
+        AlertDialog(
+            onDismissRequest = { showReauthDialog = false },
+            title = { Text("Verify Identity", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("This is a sensitive operation. Please enter your current password to continue.")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    VibrantTextField(
+                        value = currentPassword,
+                        onValueChange = { currentPassword = it },
+                        label = "CURRENT PASSWORD",
+                        placeholder = "********",
+                        isPassword = true
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (currentPassword.isEmpty()) return@Button
+                        showReauthDialog = false
+                        isLoading = true
+                        scope.launch {
+                            val result = FirebaseManager.updatePassword(newPassword, currentPassword)
+                            isLoading = false
+                            if (result.isSuccess) {
+                                android.widget.Toast.makeText(context, "Password updated successfully!", android.widget.Toast.LENGTH_SHORT).show()
+                                newPassword = ""
+                                currentPassword = ""
+                            } else {
+                                val error = result.exceptionOrNull()?.message ?: "Unknown error"
+                                android.widget.Toast.makeText(context, "Update failed: $error", android.widget.Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = BrandDark)
+                ) {
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReauthDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         containerColor = BrandBackground,
@@ -292,22 +359,32 @@ fun LoginSecurityScreen(onBack: () -> Unit) {
     ) { padding ->
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             item {
-                Text("Manage credentials and security protocols.", color = TextGray, fontWeight = FontWeight.Bold)
+                Text("Manage credentials and security protocols.", color = Color.Black, fontWeight = FontWeight.Bold)
                 
                 Spacer(modifier = Modifier.height(32.dp))
                 
                 // Change Password Section
                 VibrantSecurityCard(title = "Change Password", icon = Icons.Default.SyncLock) {
-                    VibrantTextField(value = currentPassword, onValueChange = { currentPassword = it }, label = "CURRENT PASSWORD", placeholder = "********", isPassword = true)
                     VibrantTextField(value = newPassword, onValueChange = { newPassword = it }, label = "NEW PASSWORD", placeholder = "********", isPassword = true)
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     Button(
-                        onClick = {},
-                        modifier = Modifier.align(Alignment.End),
+                        onClick = {
+                            if (newPassword.length < 6) {
+                                android.widget.Toast.makeText(context, "Min 6 characters required", android.widget.Toast.LENGTH_SHORT).show()
+                                return@Button
+                            }
+                            showReauthDialog = true
+                        },
+                        enabled = !isLoading,
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = BrandDark),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text("Update Password", fontWeight = FontWeight.Bold)
+                        if (isLoading) {
+                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                        } else {
+                            Text("Update Password", fontWeight = FontWeight.Bold, color = Color.White)
+                        }
                     }
                 }
                 
@@ -322,9 +399,12 @@ fun LoginSecurityScreen(onBack: () -> Unit) {
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Biometric Authentication", fontWeight = FontWeight.ExtraBold, color = BrandDark)
-                            Text("Use Face ID or Touch ID for faster access.", style = MaterialTheme.typography.bodySmall.copy(color = TextGray))
+                            Text("Use Face ID or Touch ID for faster access.", style = MaterialTheme.typography.bodySmall.copy(color = Color.Black, fontWeight = FontWeight.Bold))
                         }
-                        Switch(checked = biometricsEnabled, onCheckedChange = { biometricsEnabled = it }, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = BrandPrimary))
+                        Switch(checked = viewModel.volAlertsEnabled, onCheckedChange = { 
+                            viewModel.volAlertsEnabled = it 
+                            viewModel.syncPreferences()
+                        }, colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = BrandPrimary))
                     }
                 }
                 
@@ -354,7 +434,7 @@ fun LoginSecurityScreen(onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(32.dp))
                 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("ACTIVE SESSIONS", style = MaterialTheme.typography.labelSmall.copy(color = TextGray, fontWeight = FontWeight.ExtraBold))
+                    Text("ACTIVE SESSIONS", style = MaterialTheme.typography.labelSmall.copy(color = Color.Black, fontWeight = FontWeight.ExtraBold))
                     TextButton(onClick = {}) { Text("Revoke All", color = NegativeRed, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
                 }
                 
@@ -431,8 +511,8 @@ fun SessionItem(device: String, location: String, status: String, badge: String?
                         }
                     }
                 }
-                Text(location, style = MaterialTheme.typography.bodySmall.copy(color = TextGray, fontWeight = FontWeight.Bold))
-                Text(status, style = MaterialTheme.typography.labelSmall.copy(color = TextGray))
+                Text(location, style = MaterialTheme.typography.bodySmall.copy(color = Color.Black, fontWeight = FontWeight.Bold))
+                Text(status, style = MaterialTheme.typography.labelSmall.copy(color = Color.Black))
             }
         }
     }

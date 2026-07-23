@@ -72,43 +72,6 @@ fun SupportScreen(onBack: () -> Unit) {
                     accentColor = BrandSecondary
                 )
                 
-                Spacer(modifier = Modifier.height(40.dp))
-                
-                Text("Direct Message", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
-                Spacer(modifier = Modifier.height(20.dp))
-                
-                VibrantTextField(value = inquiryCategory, onValueChange = { inquiryCategory = it }, label = "INQUIRY CATEGORY", placeholder = "Portfolio Management")
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Text("DESCRIBE YOUR ISSUE", style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.ExtraBold, color = BrandDark))
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = message,
-                    onValueChange = { message = it },
-                    modifier = Modifier.fillMaxWidth().height(160.dp),
-                    placeholder = { Text("How can we assist you today?", color = TextGray.copy(alpha = 0.5f)) },
-                    shape = RoundedCornerShape(20.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedContainerColor = Color.White,
-                        focusedContainerColor = Color.White,
-                        unfocusedBorderColor = DividerColor,
-                        focusedBorderColor = BrandPrimary
-                    )
-                )
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Button(
-                    onClick = {},
-                    modifier = Modifier.fillMaxWidth().height(64.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandDark),
-                    shape = RoundedCornerShape(20.dp),
-                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-                ) {
-                    Text("SUBMIT MESSAGE", fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                }
-                
                 Spacer(modifier = Modifier.height(32.dp))
                 
                 VibrantSupportHoursCard()
@@ -121,6 +84,9 @@ fun SupportScreen(onBack: () -> Unit) {
 
 @Composable
 fun VibrantSupportCard(title: String, subtitle: String, icon: androidx.compose.ui.graphics.vector.ImageVector, buttonText: String, accentColor: Color) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -140,8 +106,31 @@ fun VibrantSupportCard(title: String, subtitle: String, icon: androidx.compose.u
             }
             Spacer(modifier = Modifier.height(20.dp))
             Button(
-                onClick = {},
-                modifier = Modifier.fillMaxWidth().height(48.dp),
+                onClick = {
+                    when (title) {
+                        "Live Chat" -> {
+                            android.widget.Toast.makeText(context, "Opening Live Chat...", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                        "Email Priority" -> {
+                            val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO).apply {
+                                data = android.net.Uri.parse("mailto:support@inflatiosmart.com")
+                                putExtra(android.content.Intent.EXTRA_SUBJECT, "Support Inquiry - Inflatio Smart")
+                            }
+                            try {
+                                context.startActivity(intent)
+                            } catch (e: Exception) {
+                                android.widget.Toast.makeText(context, "No email app found", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        "Priority Callback" -> {
+                            val intent = android.content.Intent(android.content.Intent.ACTION_DIAL).apply {
+                                data = android.net.Uri.parse("tel:18002004500")
+                            }
+                            context.startActivity(intent)
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (buttonText.startsWith("+")) BrandBackground else BrandDark
@@ -151,7 +140,8 @@ fun VibrantSupportCard(title: String, subtitle: String, icon: androidx.compose.u
                 Text(
                     buttonText, 
                     color = if (buttonText.startsWith("+")) BrandPrimary else Color.White,
-                    fontWeight = FontWeight.ExtraBold
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.sp
                 )
             }
         }

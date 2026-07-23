@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "882153439891",
+    "project_id": "inflatiosmart",
+    "storage_bucket": "inflatiosmart.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:882153439891:android:4f4d62662b8a241ed74366",
+        "android_client_info": {
+          "package_name": "com.example.project1"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhBRemVzE9uGSpjdaLhflotkin39psQE4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -16,13 +16,13 @@ private val DarkColorScheme = darkColorScheme(
     primary = BrandPrimary,
     secondary = BrandSecondary,
     tertiary = BrandGreen,
-    background = BrandDark,
-    surface = BrandSurface.copy(alpha = 0.1f),
+    background = BrandBackground, // Keep background light for consistent branding
+    surface = BrandSurface,
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.White,
-    onBackground = Color.White,
-    onSurface = Color.White
+    onBackground = Color.Black,
+    onSurface = Color.Black
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -34,8 +34,8 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = Color.White,
     onSecondary = Color.White,
     onTertiary = Color.White,
-    onBackground = BrandDark,
-    onSurface = BrandDark
+    onBackground = Color.Black,
+    onSurface = Color.Black
 )
 
 @Composable
