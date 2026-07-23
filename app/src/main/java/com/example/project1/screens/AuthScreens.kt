@@ -37,6 +37,7 @@ fun SignUpScreen(onSignUp: () -> Unit, onLogin: () -> Unit, onGoogleLogin: () ->
     var agreed by remember { mutableStateOf(false) }
     
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -158,7 +159,12 @@ fun SignUpScreen(onSignUp: () -> Unit, onLogin: () -> Unit, onGoogleLogin: () ->
                         )
                         isLoading = false
                         if (result.isSuccess) {
-                            onSignUp()
+                            android.widget.Toast.makeText(
+                                context, 
+                                "Account created! Please check your email ($email) to verify your account before logging in.", 
+                                android.widget.Toast.LENGTH_LONG
+                            ).show()
+                            onLogin() // Redirect to login after successful signup
                         } else {
                             val error = result.exceptionOrNull()
                             val rawMessage = error?.message ?: "Unknown error"
@@ -342,6 +348,11 @@ fun LoginScreen(onLogin: () -> Unit, onSignUp: () -> Unit, onGoogleLogin: () -> 
 @Composable
 fun ForgotPasswordScreen(onSendLink: () -> Unit, onBackToLogin: () -> Unit) {
     var email by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
+    var isError by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
 
     Box(modifier = Modifier.fillMaxSize().background(BrandBackground)) {
         Column(
@@ -364,6 +375,23 @@ fun ForgotPasswordScreen(onSendLink: () -> Unit, onBackToLogin: () -> Unit) {
 
             Spacer(modifier = Modifier.height(48.dp))
 
+            if (message != null) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = if (isError) Color(0xFFFFF1F2) else SuccessGreenBg),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)
+                ) {
+                    Text(
+                        text = message!!,
+                        color = if (isError) Color(0xFFE11D48) else BrandGreen,
+                        modifier = Modifier.padding(16.dp),
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+
             VibrantTextField(
                 value = email, 
                 onValueChange = { email = it }, 
@@ -375,13 +403,36 @@ fun ForgotPasswordScreen(onSendLink: () -> Unit, onBackToLogin: () -> Unit) {
             Spacer(modifier = Modifier.height(32.dp))
 
             Button(
-                onClick = onSendLink,
+                onClick = {
+                    if (email.isBlank()) {
+                        message = "Please enter your email address."
+                        isError = true
+                        return@Button
+                    }
+                    isLoading = true
+                    scope.launch {
+                        val result = FirebaseManager.sendPasswordResetEmail(email)
+                        isLoading = false
+                        if (result.isSuccess) {
+                            message = "Password reset link sent! Please check your inbox ($email)."
+                            isError = false
+                        } else {
+                            message = result.exceptionOrNull()?.message ?: "Failed to send reset link."
+                            isError = true
+                        }
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(64.dp),
+                enabled = !isLoading,
                 shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
             ) {
-                Text("Send Reset Link", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                if (isLoading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Send Reset Link", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))

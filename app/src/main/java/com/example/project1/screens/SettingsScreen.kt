@@ -166,6 +166,11 @@ fun VibrantSettingsItem(icon: ImageVector, title: String, badge: String? = null,
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonalInfoScreen(onBack: () -> Unit, viewModel: AppViewModel) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
+    val user = FirebaseManager.getCurrentUser()
+    val isVerified = user?.isEmailVerified ?: false
+
     Scaffold(
         containerColor = BrandBackground,
         topBar = {
@@ -185,7 +190,27 @@ fun PersonalInfoScreen(onBack: () -> Unit, viewModel: AppViewModel) {
                 Spacer(modifier = Modifier.height(32.dp))
                 
                 VibrantInfoField("Full Name", viewModel.userProfile?.fullName ?: "N/A")
-                VibrantInfoField("Email Address", viewModel.userProfile?.email ?: "N/A", isVerified = true)
+                
+                Column {
+                    VibrantInfoField("Email Address", viewModel.userProfile?.email ?: "N/A", isVerified = isVerified)
+                    if (!isVerified) {
+                        TextButton(
+                            onClick = {
+                                scope.launch {
+                                    val result = FirebaseManager.sendEmailVerification()
+                                    if (result.isSuccess) {
+                                        android.widget.Toast.makeText(context, "Verification email sent!", android.widget.Toast.LENGTH_SHORT).show()
+                                    } else {
+                                        android.widget.Toast.makeText(context, "Error: ${result.exceptionOrNull()?.message}", android.widget.Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                            }
+                        ) {
+                            Text("Resend Verification Email", color = BrandPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
                 VibrantInfoField("Phone Number", viewModel.userProfile?.phoneNumber ?: "N/A")
                 VibrantInfoField("Date of Birth", "05/12/1985")
                 

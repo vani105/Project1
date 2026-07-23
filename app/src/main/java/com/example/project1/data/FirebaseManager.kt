@@ -47,6 +47,9 @@ object FirebaseManager {
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             val user = result.user
             if (user != null) {
+                // Send verification email
+                user.sendEmailVerification().await()
+                
                 val userData = UserProfile(
                     uid = user.uid,
                     fullName = fullName,
@@ -65,10 +68,24 @@ object FirebaseManager {
         }
     }
 
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+        return try {
+            auth.sendPasswordResetEmail(email).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun login(email: String, password: String): Result<Unit> {
         return try {
-            auth.signInWithEmailAndPassword(email, password).await()
-            Result.success(Unit)
+            val result = auth.signInWithEmailAndPassword(email, password).await()
+            val user = result.user
+            if (user != null && !user.isEmailVerified) {
+                Result.failure(Exception("Please verify your email address before logging in. Check your inbox for the verification link."))
+            } else {
+                Result.success(Unit)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -170,4 +187,14 @@ object FirebaseManager {
     }
 
     fun getCurrentUser() = auth.currentUser
+
+    suspend fun sendEmailVerification(): Result<Unit> {
+        val user = auth.currentUser ?: return Result.failure(Exception("Not logged in"))
+        return try {
+            user.sendEmailVerification().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
